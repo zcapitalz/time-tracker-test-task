@@ -1,0 +1,285 @@
+basePath: /api/v1
+definitions:
+  internal_controllers_v1_task.changeTaskStatusRequest:
+    properties:
+      status:
+        $ref: '#/definitions/time-tracker_internal_domain.TaskStatus'
+    required:
+    - status
+    type: object
+  internal_controllers_v1_task.getUserTaskSummariesByPeriodResponse:
+    properties:
+      taskSummaries:
+        items:
+          $ref: '#/definitions/internal_controllers_v1_task.taskSummary'
+        type: array
+    type: object
+  internal_controllers_v1_task.taskSummary:
+    properties:
+      id:
+        type: string
+      totalInWorkDuration:
+        type: string
+    type: object
+  internal_controllers_v1_user.createUserRequest:
+    properties:
+      passportNumber:
+        type: string
+    required:
+    - passportNumber
+    type: object
+  internal_controllers_v1_user.createUserResponse:
+    properties:
+      user:
+        $ref: '#/definitions/internal_controllers_v1_user.user'
+    type: object
+  internal_controllers_v1_user.getUsersResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/internal_controllers_v1_user.user'
+        type: array
+    type: object
+  internal_controllers_v1_user.updateUserResponse:
+    properties:
+      user:
+        $ref: '#/definitions/internal_controllers_v1_user.user'
+    type: object
+  internal_controllers_v1_user.updateUsersRequest:
+    properties:
+      user:
+        properties:
+          address:
+            type: string
+          name:
+            type: string
+          passportSeriesAndNumber:
+            type: string
+          patronymic:
+            type: string
+          surname:
+            type: string
+        type: object
+    type: object
+  internal_controllers_v1_user.user:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      passportNumber:
+        type: string
+      patronymic:
+        type: string
+      surname:
+        type: string
+    type: object
+  time-tracker_internal_controllers_utils_http.HTTPError:
+    properties:
+      error:
+        type: string
+    type: object
+  time-tracker_internal_domain.TaskStatus:
+    enum:
+    - iddle
+    - in-work
+    type: string
+    x-enum-varnames:
+    - TaskStatusIddle
+    - TaskStatusInWork
+info:
+  contact: {}
+  description: API to track performance
+  title: Time Tracker
+  version: "1.0"
+paths:
+  /users:
+    get:
+      description: Get a list of users based on filters and pagination
+      parameters:
+      - description: User filters
+        in: query
+        name: filters
+        type: string
+      - description: User pagination
+        in: query
+        name: pagination
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            $ref: '#/definitions/internal_controllers_v1_user.getUsersResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+      summary: Get users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the provided passport number and series
+      parameters:
+      - description: User creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controllers_v1_user.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/internal_controllers_v1_user.createUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+      summary: Create a new user
+  /users/{userID}:
+    delete:
+      description: Delete a user with the provided user ID
+      parameters:
+      - description: User ID to delete
+        in: path
+        name: userID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: User deleted successfully
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+      summary: Delete a user
+    patch:
+      consumes:
+      - application/json
+      description: Update a user with the provided user ID
+      parameters:
+      - description: User ID to update
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Update user request
+        in: body
+        name: updateUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controllers_v1_user.updateUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated successfully
+          schema:
+            $ref: '#/definitions/internal_controllers_v1_user.updateUserResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+      summary: Update a user
+  /users/{userID}/task-summaries:
+    get:
+      description: Get the task summaries for a specific user within a given period
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Start of the period
+        format: date-time
+        in: query
+        name: periodStart
+        required: true
+        type: string
+      - description: End of the period
+        format: date-time
+        in: query
+        name: periodEnd
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success response
+          schema:
+            $ref: '#/definitions/internal_controllers_v1_task.getUserTaskSummariesByPeriodResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+      summary: Get task summaries by user and period
+  /users/{userID}/tasks/{taskID}/status:
+    put:
+      consumes:
+      - application/json
+      description: Set the status of a task for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      - description: Task status request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_controllers_v1_task.changeTaskStatusRequest'
+      responses:
+        "200":
+          description: Success response
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/time-tracker_internal_controllers_utils_http.HTTPError'
+      summary: Set task status
+swagger: "2.0"
